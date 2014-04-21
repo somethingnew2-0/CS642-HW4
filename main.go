@@ -5,6 +5,7 @@ import (
   "encoding/hex"
   "flag"
   "fmt"
+  "runtime"
 )
 
 var (
@@ -14,6 +15,9 @@ var (
 
 func init() {
   flag.Parse()
+
+  // Set runtime GOMAXPROCS
+  runtime.GOMAXPROCS(runtime.NumCPU())
 }
 
 func main() {
