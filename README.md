@@ -1,4 +1,4 @@
 CS642-HW4
 =========
 
-Cryptography
+This homework assignment covers topics in cryptography.
