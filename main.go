@@ -9,8 +9,9 @@ import (
 )
 
 var (
-  username = flag.String("username", "username", "What is the username to crack?")
-  salt     = flag.String("salt", "999999", "What is the salt to crack?")
+  username = flag.String("username", "ristenpart", "What is the username to crack?")
+  salt     = flag.String("salt", "134153169", "What is the salt to crack?")
+  hash     = flag.String("hash", "37448ba7de7f5b4396697edaeddcd7bc840964e6ce82016915b830a91d69eb2f", "What is the hash to crack?")
 )
 
 func init() {
@@ -21,9 +22,8 @@ func init() {
 }
 
 func main() {
-  hash := sha256.New()
-  hash.Write([]byte(*username + ",12345," + *salt))
-  md := hash.Sum(nil)
-  mdStr := hex.EncodeToString(md)
-  fmt.Printf(mdStr)
+  sha := sha256.New()
+  sha.Write([]byte(*username + ",12345," + *salt))
+  test := hex.EncodeToString(sha.Sum(nil))
+  fmt.Println(test)
 }
