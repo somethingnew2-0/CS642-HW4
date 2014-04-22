@@ -33,7 +33,7 @@ func main() {
     lastOps := atomic.LoadUint64(&ops)
     for _ = range ticker.C {
       recentOps := atomic.LoadUint64(&ops)
-      fmt.Printf("Hashing at %d/sec\n", recentOps-lastOps)
+      fmt.Printf("Hashing at %d hashes/sec\n", recentOps-lastOps)
       lastOps = recentOps
     }
   }()
