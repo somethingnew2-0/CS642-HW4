@@ -6,6 +6,7 @@ import (
   "flag"
   "fmt"
   "runtime"
+  "sync/atomic"
   "time"
 )
 
@@ -25,6 +26,18 @@ func init() {
 }
 
 func main() {
+  ticker := time.NewTicker(time.Second)
+  var ops uint64 = 0
+
+  go func() {
+    lastOps := atomic.LoadUint64(&ops)
+    for _ = range ticker.C {
+      recentOps := atomic.LoadUint64(&ops)
+      fmt.Printf("Hashing at %d/sec\n", recentOps-lastOps)
+      lastOps = recentOps
+    }
+  }()
+
   batch := make(chan int)
 
   for i := 0; i < runtime.NumCPU(); i++ {
@@ -34,9 +47,11 @@ func main() {
           sha := sha256.New()
           sha.Write([]byte(fmt.Sprintf("%s,%d,%s", *username, i, *salt)))
           test := hex.EncodeToString(sha.Sum(nil))
+          atomic.AddUint64(&ops, 1)
           if test == *hash {
-            fmt.Printf("The integer password: %d\n", i)
-            fmt.Printf("Produces this hash: %s\n", test)
+            fmt.Println("The integer password:", i)
+            fmt.Println("Produces this hash:", test)
+            ticker.Stop()
             close(batch)
           }
         }
@@ -46,14 +61,7 @@ func main() {
 
   defer func() { recover() }()
 
-  timeStart := time.Now()
-  batchStart := 0
   for i := 0; i < *max / *size; i++ {
     batch <- i
-    if timeEnd := time.Now(); timeEnd.Sub(timeStart) > time.Second {
-      fmt.Printf("Hashing at %d/sec\n", int(i-batchStart)*(*size))
-      batchStart = i
-      timeStart = time.Now()
-    }
   }
 }
