@@ -12,6 +12,8 @@ var (
   username = flag.String("username", "ristenpart", "What is the username to crack?")
   salt     = flag.String("salt", "134153169", "What is the salt to crack?")
   hash     = flag.String("hash", "37448ba7de7f5b4396697edaeddcd7bc840964e6ce82016915b830a91d69eb2f", "What is the hash to crack?")
+  size     = flag.Int("size", 1<<15, "What is the batch size for each worker?")
+  max      = flag.Int("max", 1<<31, "What is the max integer password to look for?")
 )
 
 func init() {
@@ -22,8 +24,26 @@ func init() {
 }
 
 func main() {
-  sha := sha256.New()
-  sha.Write([]byte(*username + ",12345," + *salt))
-  test := hex.EncodeToString(sha.Sum(nil))
-  fmt.Println(test)
+  batch := make(chan int)
+
+  for i := 0; i < runtime.NumCPU(); i++ {
+    go func() {
+      for batchIndex := range batch {
+        for i := batchIndex; i < (batchIndex+1)**size; i++ {
+          sha := sha256.New()
+          sha.Write([]byte(*username + "," + string(i) + "," + *salt))
+          test := hex.EncodeToString(sha.Sum(nil))
+          if test == *hash {
+            fmt.Println("The integer password: " + string(i))
+            fmt.Println("Produces this hash: " + test)
+            close(batch)
+          }
+        }
+      }
+    }()
+  }
+
+  for i := 0; i < *max / *size; i++ {
+    batch <- i
+  }
 }
