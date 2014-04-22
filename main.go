@@ -6,6 +6,7 @@ import (
   "flag"
   "fmt"
   "runtime"
+  "time"
 )
 
 var (
@@ -29,13 +30,13 @@ func main() {
   for i := 0; i < runtime.NumCPU(); i++ {
     go func() {
       for batchIndex := range batch {
-        for i := batchIndex; i < (batchIndex+1)**size; i++ {
+        for i := batchIndex; i < (int(batchIndex+1) * (*size)); i++ {
           sha := sha256.New()
-          sha.Write([]byte(*username + "," + string(i) + "," + *salt))
+          sha.Write([]byte(fmt.Sprintf("%s,%d,%s", *username, i, *salt)))
           test := hex.EncodeToString(sha.Sum(nil))
           if test == *hash {
-            fmt.Println("The integer password: " + string(i))
-            fmt.Println("Produces this hash: " + test)
+            fmt.Printf("The integer password: %d\n", i)
+            fmt.Printf("Produces this hash: %s\n", test)
             close(batch)
           }
         }
@@ -43,7 +44,16 @@ func main() {
     }()
   }
 
+  defer func() { recover() }()
+
+  timeStart := time.Now()
+  batchStart := 0
   for i := 0; i < *max / *size; i++ {
     batch <- i
+    if timeEnd := time.Now(); timeEnd.Sub(timeStart) > time.Second {
+      fmt.Printf("Hashing at %d/sec\n", int(i-batchStart)*(*size))
+      batchStart = i
+      timeStart = time.Now()
+    }
   }
 }
