@@ -55,6 +55,7 @@ func main() {
             close(batch)
           }
         }
+        runtime.Gosched()
       }
     }()
   }
