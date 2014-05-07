@@ -1,26 +1,23 @@
 from subprocess import Popen, PIPE
 
-# proc = Popen(["./badencrypt.py", "hellooooworlddd"],stdout=PIPE)
+# proc = Popen(["./badencrypt.py", "poop"],stdout=PIPE)
 # hexCiphertext = proc.communicate()[0].strip()
 
-hexCiphertext = "1610aa2d1ec8acf4a0d746141d5d558fc0f6d5b4bd7465ed9e9f4dd69870f4f753a30c1537acf9c577439fcf64e156419389df0d374cb8d81b36e3a2ef14fcee6de760208ecb316dd82ae44f84566476"
+hexCiphertext = "1caaeb57ac2d4af7f0b7fce4e7238427d80721572ab7756552cecce8b3b35f30b098ba91594575af78cfaa06e282f53e286ce54345ea5dc244d20c2c370d4a332fcc462d463aa505ec31ec2c79d784bf"
 
-print hexCiphertext
-print str(len(hexCiphertext)/16)+" blocks"
-
-xor = 0
+xor = 0x0
 versionCiphertext = ""
 for b in range(4):
 	hexGuess = b*2
 	for i in range(256):
 		ciphertextGuess = int(hexCiphertext[32+hexGuess:34+hexGuess], 16) ^ i
-		# import pdb
-		# pdb.set_trace()
+		
+		# Add a leading 0 if hex is less than 16
 		if ciphertextGuess < 16:
 			ciphertextGuess = "0%x" % ciphertextGuess
 		else:		
 			ciphertextGuess = "%x" % ciphertextGuess
-		# print ("%x" % ciphertextGuess)+hexCiphertext[34:96]
+
 		proc = Popen(["./baddecrypt.py", versionCiphertext+ciphertextGuess+hexCiphertext[34+hexGuess:96]],stdout=PIPE)
 		output = proc.communicate()[0].strip()
 
@@ -44,18 +41,27 @@ for b in range(4):
 			versionCiphertext += ciphertextGuess
 			break
 
-print hex(16842752) #0x01010000
-plaintext = xor ^ 16842752
+cracked = xor ^ 0x01010000
+plaintext = ""
 for i in range(4):
-    # if i == 3:
-    #     msglen -= 104
-    print str(unichr(plaintext % 256))
-    plaintext = plaintext >> 8
+    plaintext = chr(cracked % 256) + plaintext
+    cracked = cracked >> 8
+
+print "The message is " + plaintext
 		
-# print str(unichr(xor ^ 1))
+# Forget about guessing the last three bytes, only first four are important
+# proc = Popen(["./baddecrypt.py", versionCiphertext+hexCiphertext[40:96]],stdout=PIPE)
+# output = proc.communicate()[0].strip()
 
-print len(hexCiphertext[40:96])
-proc = Popen(["./baddecrypt.py", versionCiphertext+hexCiphertext[40:96]],stdout=PIPE)
-output = proc.communicate()[0]
+# import re
+# pattern = re.compile(r'(\d+)')
+# # Capture msglen from "Length of ", msglen, "is too large!"
+# msglen = pattern.search(output).group()
 
-print output
+# # Check message length wasn't actually valid
+# if msglen:
+# 	msg = int(msglen)
+# 	# Can't figure out the fourth to last char
+# 	for i in range(3):
+# 	    print chr(msg % 256)
+#     	msg = msg >> 8
