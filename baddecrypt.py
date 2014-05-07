@@ -24,7 +24,6 @@ f.close()
 
 # Grab ciphertext from first argument
 ciphertext = (sys.argv[1]).decode("hex")
-
 iv = ciphertext[:16] 
 cipher = Crypto.Cipher.AES.new(key1, Crypto.Cipher.AES.MODE_CBC, IV=iv )
 plaintextWithPad = cipher.decrypt( ciphertext[16:] ) 
@@ -60,16 +59,6 @@ if res2 != 0:
 
 if len(plaintextWithPad[16:]) - 32 < msglen:
     print "Length of ", msglen, "is too large!"
-    # ivxor = struct.unpack( '<I', iv[:4] )
-    # msglen = ivxor[0] ^ msglen
-    # print hex(msglen)
-    for i in range(4):
-        if i == 3:
-            msglen -= 104
-        # print hex(msglen % 256)
-        print str(unichr(msglen % 256))
-        msglen = msglen >> 8
-
     sys.exit(0)
 
 authPtxt = plaintextWithPad[:msglen+16]
@@ -81,4 +70,3 @@ if tag != plaintextWithPad[msglen+16:msglen+16+32]:
 plaintext = authPtxt[16:msglen+16]
 print "Message received!"
     
-
